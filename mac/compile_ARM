@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Script for compiling Tapenade fortran Parser.
+# Usage: check the following parameters, then execute script.
+
+export TDIR=/PATH/TO/tapenade
+export TAPVERSION="3.16-v2-1328-g3c2338548"
+
+export ERASE="/bin/rm -rf"
+export GCC="gcc-14 -O3  -w"
+
+
+# Clean old compiled objects:
+cd $TDIR
+# $ERASE build
+mkdir -p $TDIR/bin/mac
+$ERASE bin/mac/*
+
+
+# Build the libraries for basic tree manipulations:
+cd $TDIR/src/front
+$GCC -I $TDIR/src/front -I $TDIR/build/generated-src/c/main/front -c cvtp.c             -o $TDIR/bin/mac/cvtp.o
+$GCC -I $TDIR/src/front -I $TDIR/build/generated-src/c/main/front -c treeBuilder.c      -o $TDIR/bin/mac/treeBuilder.o
+$GCC -I $TDIR/src/front -I $TDIR/build/generated-src/c/main/front -c stackTreeBuilder.c -o $TDIR/bin/mac/stackTreeBuilder.o
+
+
+# Finish build the Fortran parser:
+cd $TDIR/src/frontf
+
+sed -e "s/GITVERSION/$TAPVERSION/" fortranParser.c > fortranParserGittag.c
+$GCC -I $TDIR/src/front -I $TDIR/build/generated-src/c/main/front -DNOSELECT -Dlinux -DYYDEBUG -DSHOWTOKENS -c fortranParserGittag.c -o $TDIR/bin/mac/fortranParser.o
+$ERASE fortranParserGittag.c
+$GCC -I $TDIR/src/front -I $TDIR/build/generated-src/c/main/front -c f2il.c                                              -o $TDIR/bin/mac/f2il.o
+$GCC -I $TDIR/src/front -I $TDIR/build/generated-src/c/main/front -c pointers.c                                          -o $TDIR/bin/mac/pointers.o
+$GCC -I $TDIR/src/front -I $TDIR/build/generated-src/c/main/front -DNOSELECT -Dlinux -DYYDEBUG -DSHOWTOKENS -c scanner.c -o $TDIR/bin/mac/scanner.o
+$GCC -I $TDIR/src/front -I $TDIR/build/generated-src/c/main/front $TDIR/bin/mac/scanner.o $TDIR/bin/mac/fortranParser.o $TDIR/bin/mac/f2il.o $TDIR/bin/mac/stackTreeBuilder.o $TDIR/bin/mac/cvtp.o $TDIR/bin/mac/treeBuilder.o $TDIR/bin/mac/pointers.o -o $TDIR/bin/mac/fortranParser

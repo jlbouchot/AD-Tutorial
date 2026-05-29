@@ -1,0 +1,5 @@
+FROM registry.gitlab.inria.fr/tapenade/tapenade:latest
+
+RUN apt-get update && apt-get install --no-install-recommends -y  make gfortran
+
+ENTRYPOINT ["/bin/bash"]
