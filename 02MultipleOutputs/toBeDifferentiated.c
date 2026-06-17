@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 
     if (argc != 2)
     {
-        printf("ERROR: radius should be provided as first argument!\n");
+        printf("ERROR: some angle should be provided as first argument!\n");
         return EXIT_FAILURE;
     }
 

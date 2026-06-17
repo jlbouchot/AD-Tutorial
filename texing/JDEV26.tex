@@ -7,6 +7,7 @@
 \usepackage{amsmath}
 \usepackage{listings}
 \usepackage{tikz}
+\usetikzlibrary{fit}
 
 \usetheme{default}
 
@@ -31,6 +32,7 @@
 \newcommand{\dbf}{{\bf d}}
 \newcommand{\ebf}{{\bf e}}
 \newcommand{\gbf}{{\bf g}}
+\newcommand{\rbf}{{\bf r}}
 \newcommand{\sbf}{{\bf s}}
 \newcommand{\tbf}{{\bf t}}
 \newcommand{\ubf}{{\bf u}}
@@ -233,58 +235,6 @@ Its symbolic derivative is given by
 \end{frame}
 
 %================================================
-\section{Computational Graph View}
-
-%================================================
-\begin{frame}[fragile]{Programs as Computational Graphs}
-
-Example:
-
-\begin{lstlisting}
-y = x1 * x2
-z = sin(y)
-\end{lstlisting}
-
-\begin{center}
-\begin{tikzpicture}[node distance=2cm]
-\node (x1) at (0,0) {$x_1$};
-%\node (x2) [below of=x1] {$x_2$};
-\node (x2) at (0,2) {$x_2$};
-%\node (y) [right of=x1, xshift=2cm] {$y$};
-\node (y) at (2,1) {$y$};
-%\node (z) [right of=y, xshift=2cm] {$z$};
-\node (z) [right of=y] {$z$};
-
-\draw[->] (x1) -- (y);
-\draw[->] (x2) -- (y);
-\draw[->] (y) -- (z);
-\end{tikzpicture}
-\end{center}
-
-\begin{block}{Key idea}
-AD = systematic application of the chain rule on this graph.
-\end{block}
-
-\end{frame}
-
-%================================================
-\begin{frame}{Differential examples}
-
-Differenting elementary operations:
-
-\begin{center}
-\begin{tabular}{c|c|c}
-Operations & Primal & Derivative \\
-\hline
-\texttt{add} & $z = x + y$ & $\dif{z} = \dif{x} + \dif{y}$ \\
-\texttt{mul} & $z = x \times y$ & $\dif{z} = y\dif{x} + x\dif{y}$ \\
-\texttt{sin} & $z = \sin(x)$ & $\dif{z} = \cos(x)\dif{x}$
-\end{tabular}
-\end{center}
-
-\end{frame}
-
-%================================================
 \section{Forward Mode}
 
 %================================================
@@ -295,7 +245,7 @@ Let every number embed its differentiated value.
 Define:
 
 \[
-\xbf^* = \xbs + \dot{\xbs}\varepsilon
+\xbf = x + \dot{x}\varepsilon
 \]
 with the fictitious number $\varepsilon^2 = 0$.
 \end{block}
@@ -309,7 +259,7 @@ $\varepsilon$ is not \emph{some small number}, but redefines the arithmetic on r
 We propagate derivatives together with values.
 
 \[
-\xbf \rightarrow (\xbs, \dot{\xbs})
+\xbf \rightarrow (x, \dot{x})
 \]
 
 Each operation updates both.
@@ -319,8 +269,8 @@ Each operation updates both.
 \begin{block}{Example}
 Consider the univariate function $f(x) = x^2$.
 \[
-(\xbs + \dot{\xbs}\varepsilon)^2
-= \xbs^2 + 2\xbs\dot{\xbs}\varepsilon \left[ + \dot{\xbs}^2 \varepsilon^2 \right].
+\xbf^2 = (x + \dot{x}\varepsilon)^2
+= x^2 + 2x\dot{x}\varepsilon \left[ + \dot{x}^2 \varepsilon^2 \right].
 \]
 
 \end{block}
@@ -362,7 +312,7 @@ $z=\sin(y)$ & $\sin(y)$ & $\cos(y)\cdot 2x\dot{x}$
   \begin{block}{$\sin$}
     \vspace{-0.5cm}
     \begin{align*}
-      \sin(x + \dot{x}\varepsilon) &= \sin(x)\cos(\dot{x}\varepsilon) + \cos(x)\sin(\dot{x}\varepsilon) \\
+      \sin(\xbf) &= \sin(x)\cos(\dot{x}\varepsilon) + \cos(x)\sin(\dot{x}\varepsilon) \\
       &= \sin(x)\left( 1 + \mathcal{O}(\dot{x}^2\varepsilon^2) \right) + \cos(x)(\dot{x}\varepsilon + \mathcal{O}(\dot{x}^3\varepsilon^3)) \\
       &= \sin(x) + \cos(x)\dot{x}\varepsilon
     \end{align*}
@@ -371,7 +321,7 @@ $z=\sin(y)$ & $\sin(y)$ & $\cos(y)\cdot 2x\dot{x}$
   \begin{block}{$\cos$}
     \vspace{-0.5cm}
     \begin{align*}
-      \cos(x + \dot{x}\varepsilon) &= \cos(x)\cos(\dot{x}\varepsilon) - \sin(x)\sin(\dot{x}\varepsilon) \\
+      \cos(\xbf) &= \cos(x)\cos(\dot{x}\varepsilon) - \sin(x)\sin(\dot{x}\varepsilon) \\
       &= \cos(x)\left( 1 + \mathcal{O}(\dot{x}^2\varepsilon^2) \right) - \sin(x)(\dot{x}\varepsilon + \mathcal{O}(\dot{x}^3\varepsilon^3)) \\
       &= \cos(x) - \sin(x)\dot{x}\varepsilon
     \end{align*}
@@ -380,7 +330,7 @@ $z=\sin(y)$ & $\sin(y)$ & $\cos(y)\cdot 2x\dot{x}$
   \begin{block}{$\sqrt{\cdot}$}
     \vspace{-0.5cm}
     \begin{align*}
-      \sqrt{x + \dot{x}\varepsilon} &= \sqrt{x}\sqrt{1 + \frac{\dot{x}}{x}\varepsilon}
+      \sqrt{\xbf} &= \sqrt{x}\sqrt{1 + \frac{\dot{x}}{x}\varepsilon}
       &= \sqrt{x}\left( 1 + \frac{1}{2}\frac{\dot{x}}{x}\varepsilon + \mathcal{O}(\dot{x}^2\varepsilon^2) \right) \\
       &= \sqrt{x} + \frac{\dot{x}}{2\sqrt{x}}\varepsilon
     \end{align*}
@@ -388,25 +338,282 @@ $z=\sin(y)$ & $\sin(y)$ & $\cos(y)\cdot 2x\dot{x}$
 \end{frame}
 
 %================================================
-\begin{frame}{Forward Mode review}
+\begin{frame}{Differential examples}
 
-\begin{block}{Idea}
-Forward AD propagates perturbations: "How much is this output influenced by a small change in this input?"
-\end{block}
+Differenting elementary operations:
 
-\begin{block}{Rule of thumb}
-Cost $\propto$ number of inputs
-\end{block}
-
-Best when:
-
-\begin{itemize}
-\item Few inputs
-\item Many outputs
-\end{itemize}
+\begin{center}
+\begin{tabular}{c|c|c}
+Operations & Primal & Derivative \\
+\hline
+\texttt{add} & $z = x + y$ & $\dif{z} = \dif{x} + \dif{y}$ \\
+\texttt{mul} & $z = x \times y$ & $\dif{z} = y\dif{x} + x\dif{y}$ \\
+\texttt{sin} & $z = \sin(x)$ & $\dif{z} = \cos(x)\dif{x}$
+\end{tabular}
+\end{center}
 
 \end{frame}
 
+%================================================
+\begin{frame}[fragile]{Programs as Computational Graphs}
+
+\begin{lstlisting}
+  INPUT:  x
+  OUTPUT: y,z,r
+y = cos(x)
+z = sin(x)
+t1 = y*y
+t2 = z*z
+r = t1+t2
+\end{lstlisting}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.65, transform shape, node distance=1.8cm, every node/.style={draw, rounded corners, inner sep=4pt}, output/.style={draw, fill=gray!10, inner sep=4pt}, block/.style={draw, thick, rounded corners, inner sep=8pt}]
+\node (x) at (0,1) {$x$};
+\node (y) at (4,2.5) {$y = \cos(x)$};
+\node (z) at (4,0.5) {$z = \sin(x)$};
+\node (t1) at (7,2.5) {$t_1 = y*y$};
+\node (t2) at (7,0.5) {$t_2 = z*z$};
+\node (r) at (10,1.5) {$r = t_1 + t_2$};
+
+\node[output] (outy) at (4,4.2) {$y$};
+\node[output] (outz) at (4,-1.2) {$z$};
+\node[output] (outr) at (12,1.5) {$r$};
+
+\node[block, fit=(y) (z) (t1) (t2) (r)] (comp) {};
+
+\draw[->] (x) -- (y);
+\draw[->] (x) -- (z);
+\draw[->] (y) -- (t1);
+\draw[->] (z) -- (t2);
+\draw[->] (t1) -- (r);
+\draw[->] (t2) -- (r);
+\draw[->] (y) -- (outy);
+\draw[->] (z) -- (outz);
+\draw[->] (r) -- (outr);
+\end{tikzpicture}
+\end{center}
+
+\begin{block}{Key idea}
+AD = systematic application of the chain rule on this graph.
+\end{block}
+
+\end{frame}
+
+
+
+
+%================================================
+\begin{frame}{Forward AD via Dual Numbers}
+
+Seed the input perturbation with $\xbf = x + 1\cdot\varepsilon$, $\quad \varepsilon^2 = 0$.
+
+Propagate through the program:
+\begin{align*}
+\ybf &= \cos(\xbf) = \cos(x) - \sin(x)\varepsilon,
+&\dot{y} &= -\sin(x), \\
+\zbf &= \sin(\xbf) = \sin(x) + \cos(x)\varepsilon,
+&\dot{z} &= \cos(x), \\
+\tbf_1 &= \ybf^2 = y^2 + 2y\dot{y}\varepsilon, 
+&\dot{t_1} &= 2y\dot{y}, \\
+\tbf_2 &= \zbf^2 = z^2 + 2z\dot{z}\varepsilon, 
+&\dot{t_2} &= 2z\dot{z}, \\
+\rbf &= \tbf_1 + \tbf_2 = r + \bigl(\dot{t_1} + \dot{t_2}\bigr)\varepsilon
+&\dot{z} &= \cos(x), \dot{r} = \dot{t_1}+\dot{t_2}.
+\end{align*}
+
+\end{frame}
+
+\begin{frame}{This is AD}
+\begin{picture}(450,200)
+\put( 0,180) {\tt SUBROUTINE FOO(x,$\>\>\>\>\>\>\>\>$y,$\>\>\>\>\>\>\>\>$z,$\>\>\>\>\>\>\>\>\>$r,$\>\>\>\>\>\>$)}
+\put(10,140) {\tt REAL x,y,z,r}
+\put(10, 100) {\tt y = COS(x)}
+\put(10, 60) {\tt z = SIN(x)}
+\put(10, 20) {\tt r = y*y + z*z}
+\put( 0,  0) {\tt END}\pause
+\put(10, 120) {\color{darkerred}\tt yd = -SIN(x)*xd}
+\put(10, 80) {\color{darkerred}\tt zd = COS(x)*xd}
+\put(10, 40) {\color{darkerred} \tt rd = 2*y*yd + 2*z*zd}
+\put(10,160) {\color{darkerred}\tt REAL yd,zd,rd,xd}
+\put(106,180){\color{darkerred}\tt xd,$\>\>\>\>\>\>$yd,$\>\>\>\>\>\>$zd,$\>\>\>\>\>\>$rd}
+\put( 80,190){\color{darkerred}$\bullet$}
+\end{picture}
+\centerline{}
+\end{frame}
+
+%================================================
+\begin{frame}{Forward Mode review}
+
+\begin{block}{Forward / tangent mode idea}
+Forward AD propagates perturbations: "How much is this output influenced by a small change in this input?"
+\end{block}
+
+\begin{block}{Source transformation AD}
+Systematic application of the chain rule on every instruction in the code, interweaving tangent and primal code
+\end{block}
+
+
+
+\end{frame}
+
+\begin{frame}{Let's get started with Tapenade}
+  Various ways to test Tapenade:
+  \begin{itemize}
+    \item Online via Tapenade's servlet
+    \item Local install
+    \item In a docker environment
+    \item Go to XXXX TODO: Add Tiny URL once public
+    \item Follow the README for install / usage instructions
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{First example}
+  \begin{itemize}
+    \item Go through the code \texttt{01BasicTest} and write down the actual (maths) computation
+    \item What do you expect the differentiated code should be?
+    \item Run Tapenade from the command line \emph{as is} and compare with your expectations.
+    \pause
+    \item The log tells you it has no root $\Rightarrow$ use \texttt{-head}
+    \item You see more variable than what you thought $\Rightarrow$ by default, every differentiable \emph{thing} is being differentiated. Be specific in the \texttt{-head quad\_fun(quad\_fun/x)}: 
+  \end{itemize}
+
+  Note that you can tell Tapenade to output the results (and log files) to an external destination
+  \begin{lstlisting}
+  mkdir RESULTS
+  tapenade -O RESULTS
+  \end{lstlisting}
+
+\end{frame}
+
+\begin{frame}{Take-home message 1}
+  Useful arguments for Tapenade: 
+  \begin{itemize}
+    \item \texttt{-O} redirects the output to a directory (needs to exist)
+    \item \texttt{-forward} or \texttt{-tangent} or \texttt{-d} (i.e. \emph{dot}) or \texttt{-tl} forces tapenade to work out the forward mode (which is the default)
+    \item \texttt{-head} tells tapenade which routine you want to differentiate
+    \item \texttt{-head ROUTINE(o1,o2)/(i1,i2,i3)} allows to compute only the necessary derivatives
+    \item The \emph{return variable} of the function and the function itself share the same name.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Second example}
+  Let's look at \texttt{02MultipleOutputs}. Its main function reads 
+  \begin{lstlisting}
+double get_radius(double in, double* outcos, double* outsin){
+  double tmp = in*in/2.0+in+1.0;
+
+  *outcos = cos(tmp);
+  *outsin = sin(tmp);
+
+  return (*outcos)*(*outcos)+(*outsin)*(*outsin);
+}
+  \end{lstlisting}
+
+  Run tapenade to differentiate this differentiation \emph{head}'s output as well as the \texttt{cos} and \texttt{sin} variables with respect to the input \texttt{in}
+  % tapenade -O RESULT/ toBeDifferentiated.c -head "get_radius(get_radius,outcos,outsin)/(in)"
+  
+
+\end{frame}
+
+\begin{frame}[fragile]{Take-home message 2}
+  \begin{itemize}
+    \item Differentiation tools differentiate instructions, not logic, the return value should always be 0. You may see the following piece of code: 
+    \begin{lstlisting}
+return 2*(*outcos)*(*outcosd) + 2*(*outsin)*(*outsind)
+    \end{lstlisting}
+    \item See how the return value is passed as an argument, while its derivative is given as the output of the diff'ed function:
+    \begin{lstlisting}
+double get_radius_d(double in, double ind, double *outcos, double *outcosd, 
+    double *outsin, double *outsind, double *get_radius) {
+    \end{lstlisting}
+    \item Note the automatic naming conventions: \texttt{vard} for the (forward) differentiated variables and \texttt{functionName\_d} for the (forward) differentiated functions.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{How should I run the diff'ed code?}
+  Question 1: I had a running main and now I have some functions. What should I do? \\
+  Question 2: How can I make sure my derivatives are correct?
+
+  $\Rightarrow$ Use \texttt{-context} mode! It
+  \begin{itemize}
+    \item produces a complete differentiated program, with a sample main and helps with validation / debug harnesses.
+    \item requires a set of utility functions within \texttt{ADFirstAidKit} available via tapenade's source code: (adapt to yout path)
+    \begin{lstlisting}
+wget tapenade.inria.fr:8080/tapenade/ADFirstAidKit.tar
+tar vxf ADFirstAidKit.tar
+    \end{lstlisting}
+    \item allows debugging by running twice the compiled code with the environment variable \texttt{DBAD\_PHASE=1} (perturbed run) and \texttt{DBAD\_PHASE=2} (\emph{natural} run).
+    \item comparing both runs gives the divided difference baseline for validation
+  \end{itemize}
+ 
+\end{frame}
+
+\begin{frame}[fragile]{Running example 03}
+  Run the same command as before, but provide the \texttt{-head} to the command line.
+  \begin{lstlisting}
+mkdir RESULTS
+tapenade -O RESULT/ toBeDifferentiated.c -head "get_radius(get_radius,outcos,outsin)/(in)" -context
+  \end{lstlisting}
+  
+  Some care should be taken: 
+  \begin{enumerate}
+    \item The results are \emph{condensed}: if the differentiation involves multiple outputs, the results need to be reduced to a single number. 
+    \item Compile things via 
+    \begin{lstlisting}
+gcc -I <ADFirstAidKit> toBeDifferentiated_d.c <ADFirstAidKit>/adContext.c -lm -o tgt.exe
+    \end{lstlisting}
+    \item Typical validation sequence:
+      \begin{lstlisting}
+DBAD_PHASE=1 ./tgt
+DBAD_PHASE=2 ./tgt
+      \end{lstlisting}
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Take-hime message 3}
+  \begin{itemize}
+    \item \texttt{-context} option allows for instrumentation of the diff'ed code.
+    \item Order of Tapenade's command line arguments doesn't matter: all non-dashed arguments are assumed to be files
+    \item Always debug your (differentiated) code in tangent mode.
+    \item Run the tangent context code twice, setting the \texttt{DBAD\_PHASE} variable
+    \item Compare actual tangent computed values with the provided finite differences
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{KEPT IF NEEDED ! Programs as Computational Graphs}
+
+Example:
+
+\begin{lstlisting}
+y = x1 * x2
+z = sin(y)
+\end{lstlisting}
+
+\begin{center}
+\begin{tikzpicture}[node distance=2cm]
+\node (x1) at (0,0) {$x_1$};
+%\node (x2) [below of=x1] {$x_2$};
+\node (x2) at (0,2) {$x_2$};
+%\node (y) [right of=x1, xshift=2cm] {$y$};
+\node (y) at (2,1) {$y$};
+%\node (z) [right of=y, xshift=2cm] {$z$};
+\node (z) [right of=y] {$z$};
+
+\draw[->] (x1) -- (y);
+\draw[->] (x2) -- (y);
+\draw[->] (y) -- (z);
+\end{tikzpicture}
+\end{center}
+
+\begin{block}{Key idea}
+AD = systematic application of the chain rule on this graph.
+\end{block}
+
+\end{frame}
+
+
+% ====== Going from fwd to bwd in our understanding
 \begin{frame}{Left to right or right to left}
 
 A program computes {\bf out} from {\bf in}:
@@ -419,7 +626,7 @@ One can propagate ${\dif{\tt v}\over \dif{\bf in}}$ forward $\Rightarrow$ Tangen
 \end{equation*}
 One can propagate ${\dif{\bf out}\over \dif{\tt v}}$ backward $\Rightarrow$ Adjoint (VJP, more later):
 \begin{equation*}
-\frac{{\dif{\textbf{out}}}}{\dif{\textbf{in}}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\tt v_1}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\tt v_2}} \leftarrow \cdots \leftarrow \frac{{\dif\textbf{out}}}{\dif{\tt v_9}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\textbf{out}}} = \bar{\textbf{out}}{\color{red}1.0}
+\frac{{\dif{\textbf{out}}}}{\dif{\textbf{in}}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\tt v_1}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\tt v_2}} \leftarrow \cdots \leftarrow \frac{{\dif\textbf{out}}}{\dif{\tt v_9}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\textbf{out}}} = \bar{\textbf{out}} = {\color{red}1.0}
 \end{equation*}
 The {\color{red} initialization} are called {\color{red} seeds} when dealing with many variables.
 \end{frame}
