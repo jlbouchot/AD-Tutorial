@@ -37,6 +37,7 @@
 \newcommand{\tbf}{{\bf t}}
 \newcommand{\ubf}{{\bf u}}
 \newcommand{\vbf}{{\bf v}}
+\newcommand{\wbf}{{\bf w}}
 \newcommand{\xbf}{{\bf x}}
 \newcommand{\ybf}{{\bf y}}
 \newcommand{\zbf}{{\bf z}}
@@ -571,7 +572,7 @@ DBAD_PHASE=2 ./tgt
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{Take-hime message 3}
+\begin{frame}{Take-home message 3}
   \begin{itemize}
     \item \texttt{-context} option allows for instrumentation of the diff'ed code.
     \item Order of Tapenade's command line arguments doesn't matter: all non-dashed arguments are assumed to be files
@@ -581,35 +582,200 @@ DBAD_PHASE=2 ./tgt
   \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{KEPT IF NEEDED ! Programs as Computational Graphs}
+\begin{frame}{Tangent, forward AD and directional derivatives}
+  \begin{block}{Jacobian Vector products}
+    Let $f: \mathbb{R}^p \to \mathbb{R}^d$ be a function implemented by program \texttt{P}. 
+    The \alert{Jacobian vector product} (JVP) is a function mapping an input vector $\textbf{v}$ to the derivative of the function $f$ along the direction $\vbf$
+    i.e.
+    $$
+    JVP: \mathbb{R}^p \times \mathbb{R}^p \to \mathbb{R}^d, JVP_f(\vbf; \wbf) = J_f(\wbf) \cdot \vbf
+    $$
+    No need for the evaluation or storage of the whole Jacobian.
+  \end{block}
+  
+  \begin{block}{Remarks}
+    This seems overly complicated however, note: 
+    \begin{itemize}
+      \item If $p = 1$, then usually one will have $\wbf$ represent the (scalar) data, and starting with $\vbf = 1$ will compute the whole \emph{Jacobian}.
+      \item Assuming $d > 1$, one needs to know in which direction the propagation is required.
+    \end{itemize}
+  \end{block}
+\end{frame}
 
-Example:
+\begin{frame}{Why JVPs}
+  \begin{block}{Newton--Krylov solvers}
+    To solve a nonlinear system $F(\xbf)=0$, Newton's method uses
+    $$
+    J_F(\xbf_k)\,\delta_k = -F(\xbf_k), \qquad \xbf_{k+1} = \xbf_k + \delta_k.
+    $$
+    In large-scale problems, the linear system is typically solved by a Krylov method (e.g. GMRES).
+  \end{block}
 
-\begin{lstlisting}
-y = x1 * x2
-z = sin(y)
-\end{lstlisting}
+  \begin{itemize}
+    \item For a linear system $J_F(\xbf_k)\,\delta_k = -F(\xbf_k)$, construct the Krylov subspace
+      $$
+      \mathcal{K}_m = \operatorname{span}\{r_0, J_F(\xbf_k)r_0, \ldots, J_F(\xbf_k)^{m-1}r_0\},
+      \quad r_0 = F(\xbf_k).
+      $$
+    \item Equivalently, the method only requires evaluations of the form $J_F(\xbf_k)v$.
+  \end{itemize}
+\end{frame}
 
-\begin{center}
-\begin{tikzpicture}[node distance=2cm]
-\node (x1) at (0,0) {$x_1$};
-%\node (x2) [below of=x1] {$x_2$};
-\node (x2) at (0,2) {$x_2$};
-%\node (y) [right of=x1, xshift=2cm] {$y$};
-\node (y) at (2,1) {$y$};
-%\node (z) [right of=y, xshift=2cm] {$z$};
-\node (z) [right of=y] {$z$};
+\begin{frame}{Vector mode and multiple directions}
+  \begin{block}{What can be done if we need more than one direction?}
+    Two options are available: 
+    \begin{itemize}
+      \item Loop around the derivative code with the appropriate initialisation.
+      \item Generate derivatives \emph{in vector mode}, allowing to mutualize expressions as much as possible.
+    \end{itemize}
+  \end{block}
+\end{frame}
 
-\draw[->] (x1) -- (y);
-\draw[->] (x2) -- (y);
-\draw[->] (y) -- (z);
-\end{tikzpicture}
-\end{center}
+\begin{frame}{Seed matrices}
+  \begin{block}{Forward vector mode}
+    Let $f:\mathbb{R}^p \to \mathbb{R}^d$ and let $S \in \mathbb{R}^{p\times r}$ be a \emph{seed matrix}.
+    Initialize the tangent variables by
+    $
+    \dot{x} = S.
+    $
+    % or, equivalently, by setting the input perturbation to
+    % $$
+    % X(\varepsilon) = x + \sum_{j=1}^r \varepsilon_j s_j,
+    % $$
+    % where $s_j$ is the $j$-th column of $S$.
 
-\begin{block}{Key idea}
-AD = systematic application of the chain rule on this graph.
-\end{block}
+    Propagating these perturbations through the program gives
+    $$
+     \left[ \begin{array}{cccc} | & | & & | \\ \dot{\ybf}_1 & \dot{\ybf}_2 & \dots & \dot{\ybf}_r \\ | & | & & | \end{array} \right]\dot{\ybf} = J_f(\xbf)\,S \in \mathbb{R}^{q\times r}, \quad \dot{\ybf}_i = J_f(\xbf) \cdot \sbf_i.
+    $$
+    Thus each column of $\dot{y}$ is the derivative of the output in one chosen direction.
 
+    \begin{itemize}
+      \item If $r=1$, this is the usual JVP / directional derivative.
+      \item If $S=I_p$, then $J_f(x)S = J_f(x)$ and the full Jacobian is obtained.
+      \item If $r>1$, several directions are computed simultaneously, reducing overhead.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Running example 04}
+  Look at example 04 and 
+  \begin{itemize}
+    \item Run tapenade in forward mode, differentiating the routine \texttt{compute\_matrices} in forward mode.
+
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Take-home message 4}
+  \begin{itemize}
+    \item Tapenade is able to handle many complex types (composite, vector, ...)
+    \item \emph{Forward Vector mode} is \alert{much faster} than multiple calls to a \emph{scalar forward mode}.
+    \item Vector mode is called with \texttt{-vector} or \texttt{-multi}
+    \item Need to adapt the code or include a \texttt{DIFFSIZES} file
+    \item WARNING: The log messages are important; read them!
+    \item \texttt{NbDirsMax} has an important role!
+  \end{itemize}
+\end{frame}
+
+
+
+
+\begin{frame}{Toy example 1: $f:\mathbb{R}^5 \to \mathbb{R}^2$}
+  \begin{center}
+  \begin{tikzpicture}[>=stealth, scale=0.9, every node/.style={font=\small}]
+    \node (x1) at (0,1.5) {$x_1$};
+    \node (x2) at (0,0) {$x_2$};
+    \node (t1) at (2.2,1.5) {$t_1=x_1+x_2$};
+    \node (t2) at (2.2,0) {$t_2=x_1x_2$};
+    \node (t3) at (4.8,1.5) {$t_3=\sin(t_1)$};
+    \node (t4) at (4.8,0) {$t_4=\cos(t_2)$};
+    \node (t5) at (7.2,0.75) {$t_5=t_3+t_4$};
+    \node (y1) at (9.2,2.0) {$y_1=t_1$};
+    \node (y2) at (9.2,1.2) {$y_2=t_2$};
+    \node (y3) at (9.2,0.4) {$y_3=t_3$};
+    \node (y4) at (9.2,-0.4) {$y_4=t_4$};
+    \node (y5) at (9.2,-1.2) {$y_5=t_5$};
+
+    \draw[->] (x1) -- (t1);
+    \draw[->] (x2) -- (t1);
+    \draw[->] (x1) -- (t2);
+    \draw[->] (x2) -- (t2);
+    \draw[->] (t1) -- (t3);
+    \draw[->] (t2) -- (t4);
+    \draw[->] (t3) -- (t5);
+    \draw[->] (t4) -- (t5);
+    \draw[->] (t1) -- (y1);
+    \draw[->] (t2) -- (y2);
+    \draw[->] (t3) -- (y3);
+    \draw[->] (t4) -- (y4);
+    \draw[->] (t5) -- (y5);
+  \end{tikzpicture}
+  \end{center}
+
+  For a direction $v=(v_1,v_2)^T$, set $\dot{x}_1=v_1$, $\dot{x}_2=v_2$. Then
+  \begin{align*}
+    \dot{y}_1 = \dot{t}_1 &= \dot{x}_1+\dot{x}_2, \\
+    \dot{y}_2 = \dot{t}_2 &= x_2\dot{x}_1+x_1\dot{x}_2, \\
+    \dot{y}_3 = \dot{t}_3 &= \cos(t_1)\,\dot{t}_1, \\
+    \dot{y}_4 = \dot{t}_4 &= -\sin(t_2)\,\dot{t}_2, \\
+    \dot{y}_5 = \dot{t}_5 &= \dot{t}_3+\dot{t}_4.
+  \end{align*}
+  Each equation is a JVP for one edge of the graph.
+\end{frame}
+
+\begin{frame}{Toy example 1: $f:\mathbb{R}^2 \to \mathbb{R}^5$}
+  \begin{center}
+  \begin{tikzpicture}[>=stealth, scale=0.9, every node/.style={font=\small}]
+    \node (x1) at (0,2.4) {$x_1$};
+    \node (x2) at (0,1.6) {$x_2$};
+    \node (x3) at (0,0.8) {$x_3$};
+    \node (x4) at (0,0) {$x_4$};
+    \node (x5) at (0,-0.8) {$x_5$};
+    \node (t1) at (2.4,1.6) {$t_1=\sum_{i=1}^5 x_i$};
+    \node (t2) at (2.4,-0.2) {$t_2=\prod_{i=1}^5 x_i$};
+    \node (t3) at (5.0,1.0) {$t_3=\sin(t_1)$};
+    \node (t4) at (5.0,-0.8) {$t_4=\log(t_2)$};
+    \node (y1) at (7.8,1.2) {$y_1=t_3$};
+    \node (y2) at (7.8,-0.6) {$y_2=t_4$};
+
+    \draw[->] (x1) -- (t1);
+    \draw[->] (x2) -- (t1);
+    \draw[->] (x3) -- (t1);
+    \draw[->] (x4) -- (t1);
+    \draw[->] (x5) -- (t1);
+    \draw[->] (x1) -- (t2);
+    \draw[->] (x2) -- (t2);
+    \draw[->] (x3) -- (t2);
+    \draw[->] (x4) -- (t2);
+    \draw[->] (x5) -- (t2);
+    \draw[->] (t1) -- (t3);
+    \draw[->] (t2) -- (t4);
+    \draw[->] (t3) -- (y1);
+    \draw[->] (t4) -- (y2);
+  \end{tikzpicture}
+  \end{center}
+
+  For a direction $v=(v_1,\ldots,v_5)^T$, set $\dot{x}_i=v_i$. Then
+  \begin{align*}
+    \dot{t}_1 &= \sum_{i=1}^5 \dot{x}_i,  & \dot{t}_2 &= t_2 \sum_{i=1}^5 \frac{\dot{x}_i}{x_i}, \\
+    \dot{y}_1 = \dot{t}_3 &= \cos(t_1)\,\dot{t}_1,    & \dot{y}_2 = \dot{t}_4 &= \frac{1}{t_2}\,\dot{t}_2.
+  \end{align*}
+  % This is the forward-mode picture for a problem with many inputs but only two outputs.
+\end{frame}
+
+\begin{frame}{Computational cost comparison}
+  Given the previous toy examples, we want to compute the whole Jacobian or need to know the sensitivity of all inputs on every outputs.
+  
+  \begin{block}{Cost analysis 1}
+    We need to compute two directions: $\vbf = \left( 1, 0 \right)^T$ and $\wbf = \left( 0, 1\right)^T$ (or use the seed matrix $I_2$).
+    This generates all sensitivities needed.
+  \end{block}
+
+  \begin{block}{Cost analysis 2}
+    We need to compute five directions: $\sbf = \left( 1, 0, 0, 0, 0 \right)^T$, $\tbf = \left( 0, 1, 0, 0, 0\right)^T$, $\ubf = \left( 0, 0, 1, 0, 0\right)^T$, $\vbf = \left( 0, 0, 0, 1, 0\right)^T$, $\wbf = \left( 0, 0, 0, 0, 1\right)^T$ (or use the seed matrix $I_5$).
+    Doing so generates all the required sensitivities.
+  \end{block}
+  
 \end{frame}
 
 
@@ -620,11 +786,11 @@ A program computes {\bf out} from {\bf in}:
 \begin{equation*}
 {\textbf{in}} \rightarrow {\tt v_1} \rightarrow {\tt v_2} \rightarrow \cdots \rightarrow {\tt v_9} \rightarrow {\textbf{out}}
 \end{equation*}
-One can propagate ${\dif{\tt v}\over \dif{\bf in}}$ forward $\Rightarrow$ Tangent (JVP, more later):
+One can propagate ${\dif{\tt v}\over \dif{\bf in}}$ forward $\Rightarrow$ Tangent (JVPs!):
 \begin{equation*}
 {\color{red}1.0} = \dot{\textbf{in}} = \frac{\dif{\textbf{in}}}{\dif{\textbf{in}}} \rightarrow \frac{\dif{\tt v_1}}{\dif{\textbf{in}}} \rightarrow\frac{\dif{\tt v_2}}{d\textbf{in}} \rightarrow \cdots \rightarrow \frac{\dif{\tt v_9}}{\dif\textbf{in}} \rightarrow \frac{\dif{\textbf{out}}}{\dif{\textbf{in}}}
 \end{equation*}
-One can propagate ${\dif{\bf out}\over \dif{\tt v}}$ backward $\Rightarrow$ Adjoint (VJP, more later):
+One can propagate ${\dif{\bf out}\over \dif{\tt v}}$ backward $\Rightarrow$ Adjoint (VJPs, coming now):
 \begin{equation*}
 \frac{{\dif{\textbf{out}}}}{\dif{\textbf{in}}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\tt v_1}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\tt v_2}} \leftarrow \cdots \leftarrow \frac{{\dif\textbf{out}}}{\dif{\tt v_9}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\textbf{out}}} = \bar{\textbf{out}} = {\color{red}1.0}
 \end{equation*}
@@ -632,7 +798,7 @@ The {\color{red} initialization} are called {\color{red} seeds} when dealing wit
 \end{frame}
 
 \begin{frame}{Costs of Tangent and Adjoint AD}
-$f \>\>:\>\>\>\> \hbox{\bf in} \in \Rbb^{p} \>\>\rightarrow\>\> \hbox{\bf out} \in \Rbb^{n}$, computed with cost ${\tt P}$\\
+$f \>\>:\>\>\>\> \hbox{\bf in} \in \Rbb^{p} \>\>\rightarrow\>\> \hbox{\bf out} \in \Rbb^{d}$, computed with cost ${\tt P}$\\
 \centerline{}
 \begin{minipage}[c]{20mm}
 {${{\bf d\>out}\over {\bf d\>in}} = $}
@@ -652,24 +818,120 @@ $f \>\>:\>\>\>\> \hbox{\bf in} \in \Rbb^{p} \>\>\rightarrow\>\> \hbox{\bf out} \
 \centerline{}
 \begin{itemize}
 \item ${\bf d\>out}\over {\bf d\>in}$ costs {\color{darkerred}$p*4?*{\tt P}$} using the {\color{olive}tangent mode}\\
-      \indent Good if $n > = p$
-\item ${\bf d\>out}\over {\bf d\>in}$ costs {\color{darkerred}$n*4?*{\tt P}$} using the {\color{red}adjoint mode}\\
-      \indent Good if $n \ll p$ (e.g $n=1$ for a gradient)
+      \indent Good if $d > = p$
+\item ${\bf d\>out}\over {\bf d\>in}$ costs {\color{darkerred}$d*4?*{\tt P}$} using the {\color{red}adjoint mode}\\
+      \indent Good if $d \ll p$ (e.g $d=1$ for a gradient)
 \end{itemize}
 \end{frame}
 
-%================================================
-\section{Multivalued inputs or outputs}
-
-\begin{frame}{Differentiating non high school functions}
-  A function $F = f_p \circ f_{p-1} \circ \cdots \circ f_1: \mathbb{R}^n\to\mathbb{R}^d$ is implemented through a program  \newline{}
-  
-  {\begin{center} \texttt{P: \{ I\_1, I\_2, \dots, I\_p \}} \end{center}}
-
-  Defining $V_0 = \texttt{\textbf{in}}$ and $V_k = f_k(V_{k-1})$
-
-
+\begin{frame}{JVPs vs VJPs}
+  \begin{block}{JVPs as directional derivatives}
+    $$JVP_f(\wbf, \vbf) = J_F(\wbf)\cdot \vbf = \lim_{h \to 0} \frac{f(\wbf + h \vbf) - f(\wbf)}{h}$$ 
+    It describes the changes in the outputs given the perturbation of the inputs $\vbf$.
+  \end{block}
+  \begin{block}{VJPs as differentiated projections}
+    Consider $\ubf \in \Rbb^{d}$ and let $g(\wbf; \ubf) = \langle u, f(\wbf) \rangle$ be the projection of the outputs of $f$ onto the (output) direction $\ubf$. Its gradient is given by 
+    \begin{align*}
+      \nabla_\wbf g(\wbf; \ubf) = \sum_{i=1}^d u_i \nabla_\wbf f_i(\wbf) = \ubf^T J_f(\wbf).
+    \end{align*}
+  \end{block}
+  JVPs are precisely the projection of the perturbations in the inputs onto the objective values, while JVPs are precisely the propagation of output sensitivities to input variables.
 \end{frame}
+
+\begin{frame}{VJPs... reverse... adjoints}
+  \begin{block}{reverse}
+    From the definition of the JVPs we can see that \alert{function values perturbations} propagate to input pertubations. 
+    This is also called \alert{reverse} or \alert{backward} propagation (a.k.a. backprograpation).
+  \end{block}
+  \begin{block}{adjoint}
+    Output sensitivities are usually called \alert{adjoint variables} and denoted with bar: $\bar{\cdot}$. 
+    The name adjoint comes from the scalar product relationship, for any $\dot{\wbf} \in \mathbb{R}^{n}$ and $\bar{\wbf} \in mathbb{R}^d$,
+    $$
+    \langle J_f(\wbf) \dot{\wbf}, \bar{\wbf} \rangle = \langle \dot{\wbf}, J_f(\wbf)^T\bar{\wbf} \rangle
+    $$
+    i.e. JVP's adjoint is VJP.
+  \end{block}
+\end{frame}
+
+\begin{frame}{JVPs complements VJPs}
+  \begin{block}{A quadratic model and conjugate gradient}
+    For a quadratic objective
+    $$
+    \phi(\xbf) = \tfrac12 \xbf^T A \xbf - b^T\xbf,
+    $$
+    the conjugate gradient method generates iterates
+    $$
+    \xbf_{k+1} = \xbf_k + \alpha_k p_k
+    $$
+    where the search direction satisfies
+    $$
+    p_{k+1} = r_{k+1} + \beta_k p_k,
+    \qquad
+    r_k = b - A\xbf_k.
+    $$
+  \end{block}
+
+  \begin{itemize}
+    \item In a nonlinear setting, one often replaces $A$ by the Hessian $\nabla^2 \phi(\xbf_k)$.
+    \item The Hessian-vector product needed by CG is then of the form
+      $$
+      \nabla^2 \phi(\xbf_k) v.
+      $$
+    \item For a scalar residual model $r(\xbf)$, this can be obtained from JVPs and VJPs via
+      $$
+      \nabla^2 \phi(\xbf) v = J_r(\xbf)^T J_r(\xbf) v,
+      $$
+      so the method needs repeated Jacobian action on vectors.
+    \item This is exactly why JVPs and VJPs are useful inside Newton--Krylov and CG-type solvers.
+  \end{itemize}
+\end{frame}
+
+% %================================================
+% \begin{frame}[fragile]{Reverse in practive, The Aha Moment: Why += ?}
+
+% Consider:
+
+% \begin{lstlisting}
+% y = x*x
+% z = y + y
+% \end{lstlisting}
+
+% \pause
+
+% Derivative:
+
+% \[
+% \frac{\partial z}{\partial y} = 2
+% \]
+
+% \pause
+
+% Backward propagation:
+
+% \begin{align*}
+% \bar{y} &+= 1 \\
+% \bar{y} &+= 1
+% \end{align*}
+
+% \begin{block}{Key message}
+% Adjoints accumulate because multiple paths contribute.
+% \end{block}
+
+% \end{frame}
+
+
+% %================================================
+% \section{Multivalued inputs or outputs}
+
+% \begin{frame}{Differentiating non high school functions}
+%   A function $F = f_p \circ f_{p-1} \circ \cdots \circ f_1: \mathbb{R}^n\to\mathbb{R}^d$ is implemented through a program  \newline{}
+  
+%   {\begin{center} \texttt{P: \{ I\_1, I\_2, \dots, I\_p \}} \end{center}}
+
+%   Defining $V_0 = \texttt{\textbf{in}}$ and $V_k = f_k(V_{k-1})$
+
+
+% \end{frame}
 
 %================================================
 
@@ -678,24 +940,24 @@ $f \>\>:\>\>\>\> \hbox{\bf in} \in \Rbb^{p} \>\>\rightarrow\>\> \hbox{\bf out} \
 
 %================================================
 
-\begin{frame}{Reverse Mode Goal}
+% \begin{frame}{Reverse Mode Goal}
 
-We want gradients in high dimensional input spaces:
+% We want gradients in high dimensional input spaces:
 
-\[
-f:\mathbb{R}^p \to \mathbb{R}
-\]
+% \[
+% f:\mathbb{R}^p \to \mathbb{R}
+% \]
 
-\pause
+% \pause
 
-\begin{block}{Idea}
-\begin{itemize}
-\item Accumulate variations from the output
-\item Propagate \emph{sensitivities} backwards
-\end{itemize}
-\end{block}
+% \begin{block}{Idea}
+% \begin{itemize}
+% \item Accumulate variations from the output
+% \item Propagate \emph{sensitivities} backwards
+% \end{itemize}
+% \end{block}
 
-\end{frame}
+% \end{frame}
 
 %================================================
 \begin{frame}{Adjoint Variables}
@@ -717,30 +979,50 @@ Initialize:
 %================================================
 \begin{frame}[fragile]{The Aha Moment: Why += ?}
 
-Consider:
+        Consider:
 
 \begin{lstlisting}
 y = x*x
 z = y + y
 \end{lstlisting}
 
-\pause
+  \begin{columns}
+    \begin{column}{0.48\linewidth}
+
+
 
 Derivative:
-
 \[
-\frac{\partial z}{\partial y} = 2
+\frac{\partial z}{\partial y} = \frac{\partial y_1}{\partial y} + \frac{\partial y_2}{\partial y} = 1+1 = 2.
 \]
 
-\pause
-
 Backward propagation:
-
 \begin{align*}
-\bar{y} &+= 1 \\
-\bar{y} &+= 1
+\bar{y} &+= \bar{y}_1 = 1, \\
+\bar{y} &+= \bar{y}_2 = 1.
 \end{align*}
 
+
+    \end{column}
+    \begin{column}{0.48\linewidth}
+      \begin{center}
+\begin{tikzpicture}[>=stealth, every node/.style={font=\small}]
+  \node (x) at (0,0) {$x$};
+  \node (y) at (0,-1) {$y$};
+  \node (y1) at (-1,-2) {$y_1$};
+  \node (y2) at (1,-2) {$y_2$};
+  \node (z) at (0,-3) {$z=y_1+y_2$};
+
+  \draw[->] (x) -- (y);
+  \draw[->] (y) -- (y1);
+  \draw[->] (y) -- (y2);
+  \draw[->] (y1) -- (z);
+  \draw[->] (y2) -- (z);
+\end{tikzpicture}
+\end{center}
+
+    \end{column}
+  \end{columns}
 \begin{block}{Key message}
 Adjoints accumulate because multiple paths contribute.
 \end{block}
@@ -774,9 +1056,34 @@ Best when:
 
 \begin{itemize}
 \item Many inputs
-\item Scalar output
+\item Scalar (or few) output(s)
 \end{itemize}
 
+\end{frame}
+
+\begin{frame}{Exemple 05: reverse mode}
+\end{frame}
+
+\begin{frame}{Take-home message 5}
+  \begin{itemize}
+    \item Reverse mode great for one dimensional output spaces
+    \item Some memory book-keeping required
+    \item Stacks and memory need to be handled properly
+    \item For advanced considerations: checkpointing is a real problem
+    \item Reverse mode obtained via \texttt{-reverse} or \texttt{-b}
+    \item Adoint variables are named \texttt{varb} while adjoint functions are named \texttt{func\_b}. Some texttt{func\_fwd} and \texttt{func\_bwd} also exist.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Exemple 06: tangent vs reverse; loop vs vector}
+\end{frame}
+
+\begin{frame}{Take-home message 6}
+  \begin{itemize}
+    \item If using loops: make sure you reinitialise the seeds
+    \item If very few outputs, reverse is likely to be better suited
+    \item Use vector mode whenever possible
+  \end{itemize}
 \end{frame}
 
 %================================================
