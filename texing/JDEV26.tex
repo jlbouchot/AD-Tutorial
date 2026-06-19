@@ -483,7 +483,7 @@ AD = systematic application of the chain rule on this graph.
 %================================================
 \begin{frame}{Forward AD via Dual Numbers}
 
-Seed the input perturbation with $\xbf = x + 1\cdot\varepsilon$, $\quad \varepsilon^2 = 0$.
+{\color{red}{Seed}} the input perturbation $\dif{x}/\dif{x} = 1$ in $\xbf = x + {\color{red}1}\cdot\varepsilon$, $\quad \varepsilon^2 = 0$.
 
 Propagate through the program:
 \begin{align*}
@@ -498,6 +498,8 @@ Propagate through the program:
 \rbf &= \tbf_1 + \tbf_2 = r + \bigl(\dot{t_1} + \dot{t_2}\bigr)\varepsilon
 &\dot{z} &= \cos(x), \dot{r} = \dot{t_1}+\dot{t_2}.
 \end{align*}
+
+The {\color{red} initialization} are called {\color{red} seeds}.
 
 \end{frame}
 
@@ -608,6 +610,45 @@ double get_radius_d(double in, double ind, double *outcos, double *outcosd,
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Tangent, forward AD and directional derivatives}
+  \begin{block}{Jacobian Vector products}
+    Let $f: \mathbb{R}^p \to \mathbb{R}^d$ be a function implemented by program \texttt{P}. 
+    The \alert{Jacobian vector product} (JVP) is a function mapping an input vector $\textbf{v}$ to the derivative of the function $f$ along the direction $\vbf$
+    i.e.
+    $$
+    JVP: \mathbb{R}^p \times \mathbb{R}^p \to \mathbb{R}^d, JVP_f(\vbf; \wbf) = J_f(\wbf) \cdot \vbf
+    $$
+    No need for the evaluation or storage of the whole Jacobian.
+  \end{block}
+  
+  \begin{block}{Remarks}
+    This seems overly complicated however, note: 
+    \begin{itemize}
+      \item If $p = 1$, then usually one will have $\wbf$ represent the (scalar) data, and starting with $\vbf = 1$ will compute the whole \emph{Jacobian}.
+      \item Assuming $d > 1$, one needs to know in which direction the propagation is required.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Why JVPs}
+  \begin{block}{Newton--Krylov solvers}
+    To solve a nonlinear system $F(\xbf)=0$, Newton's method uses
+    $$
+    J_F(\xbf_k)\,\delta_k = -F(\xbf_k), \qquad \xbf_{k+1} = \xbf_k + \delta_k.
+    $$
+    In large-scale problems, the linear system is typically solved by a Krylov method (e.g. GMRES).
+  \end{block}
+
+  \begin{itemize}
+    \item For a linear system $J_F(\xbf_k)\,\delta_k = -F(\xbf_k)$, construct the Krylov subspace
+      $$
+      \mathcal{K}_m = \operatorname{span}\{r_0, J_F(\xbf_k)r_0, \ldots, J_F(\xbf_k)^{m-1}r_0\},
+      \quad r_0 = F(\xbf_k).
+      $$
+    \item Equivalently, the method only requires evaluations of the form $J_F(\xbf_k)v$.
+  \end{itemize}
+\end{frame}
+
 \begin{frame}[fragile]{How should I run the diff'ed code?}
   Question 1: I had a running main and now I have some functions. What should I do? \\
   Question 2: How can I make sure my derivatives are correct?
@@ -658,45 +699,6 @@ DBAD_PHASE=2 ./tgt
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Tangent, forward AD and directional derivatives}
-  \begin{block}{Jacobian Vector products}
-    Let $f: \mathbb{R}^p \to \mathbb{R}^d$ be a function implemented by program \texttt{P}. 
-    The \alert{Jacobian vector product} (JVP) is a function mapping an input vector $\textbf{v}$ to the derivative of the function $f$ along the direction $\vbf$
-    i.e.
-    $$
-    JVP: \mathbb{R}^p \times \mathbb{R}^p \to \mathbb{R}^d, JVP_f(\vbf; \wbf) = J_f(\wbf) \cdot \vbf
-    $$
-    No need for the evaluation or storage of the whole Jacobian.
-  \end{block}
-  
-  \begin{block}{Remarks}
-    This seems overly complicated however, note: 
-    \begin{itemize}
-      \item If $p = 1$, then usually one will have $\wbf$ represent the (scalar) data, and starting with $\vbf = 1$ will compute the whole \emph{Jacobian}.
-      \item Assuming $d > 1$, one needs to know in which direction the propagation is required.
-    \end{itemize}
-  \end{block}
-\end{frame}
-
-\begin{frame}{Why JVPs}
-  \begin{block}{Newton--Krylov solvers}
-    To solve a nonlinear system $F(\xbf)=0$, Newton's method uses
-    $$
-    J_F(\xbf_k)\,\delta_k = -F(\xbf_k), \qquad \xbf_{k+1} = \xbf_k + \delta_k.
-    $$
-    In large-scale problems, the linear system is typically solved by a Krylov method (e.g. GMRES).
-  \end{block}
-
-  \begin{itemize}
-    \item For a linear system $J_F(\xbf_k)\,\delta_k = -F(\xbf_k)$, construct the Krylov subspace
-      $$
-      \mathcal{K}_m = \operatorname{span}\{r_0, J_F(\xbf_k)r_0, \ldots, J_F(\xbf_k)^{m-1}r_0\},
-      \quad r_0 = F(\xbf_k).
-      $$
-    \item Equivalently, the method only requires evaluations of the form $J_F(\xbf_k)v$.
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{Vector mode and multiple directions}
   \begin{block}{What can be done if we need more than one direction?}
     Two options are available: 
@@ -737,13 +739,13 @@ DBAD_PHASE=2 ./tgt
 \begin{frame}{Running example 04}
   Look at example 04 and 
   \begin{itemize}
-    \item Run the sample code: \texttt{make; ./ctest} $\Rightarrow$ always make sure your code runs! or \texttt{gcc -o ctest.exe toBeDifferentiated.c -lm; ./ctest.exe}
+    \item Run the sample code: \texttt{make; ./ctest}% or \texttt{gcc -o ctest.exe toBeDifferentiated.c -lm; ./ctest.exe}
     \item Run tapenade in forward mode, differentiating the routine \texttt{compute\_matrices} in forward mode.
     \item Look specifically at the differentiated structures.
     \item Validate the derivatives using the \texttt{-context} mode and the two \texttt{DBAD\_PHASE} calls.
-    \item Re-run \texttt{Tapenade} but in the case where you are solely interested in the \texttt{aff}, \texttt{sigma}, and \texttt{max\_val} variables. 
+    \item Re-run \texttt{Tapenade} to get $\partial$\texttt{aff}/$\partial$(\texttt{max\_val}, \texttt{sigma}) 
     \item Adapt the driver provided in \texttt{RESULTS} as a \texttt{driver\_gradient\_d.c} to compute the derivative via a \texttt{for} loop, seeding every aindependent variable one after the other.
-    \item Compile things (\texttt{gcc -o grad\_test\_d.exe driver\_gradient\_d.c -lm}) and run (\texttt{./grad\_test\_d.exe}).
+    \item Compile things and run !% (\texttt{gcc -o grad\_test\_d.exe driver\_gradient\_d.c -lm}) and run (\texttt{./grad\_test\_d.exe}).
     \item Repeat the three previous operations but with the \texttt{-vector} mode for \texttt{Tapenade} (and create a \texttt{driver\_gradient\_dv.c}).
     \item Compile, run, compare.
   \end{itemize}
@@ -751,6 +753,7 @@ DBAD_PHASE=2 ./tgt
 
 \begin{frame}{Take-home message 4}
   \begin{itemize}
+    \item always make sure your code runs and always check the debug context mode
     \item Tapenade is able to handle many complex types (composite, vector, ...)
     \item \emph{Forward Vector mode} is \alert{much faster} than multiple calls to a \emph{scalar forward mode}.
     \item Vector mode is called with \texttt{-vector} or \texttt{-multi}
@@ -877,7 +880,7 @@ One can propagate ${\dif{\bf out}\over \dif{\tt v}}$ backward $\Rightarrow$ Adjo
 \begin{equation*}
 \frac{{\dif{\textbf{out}}}}{\dif{\textbf{in}}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\tt v_1}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\tt v_2}} \leftarrow \cdots \leftarrow \frac{{\dif\textbf{out}}}{\dif{\tt v_9}} \leftarrow \frac{\dif{\textbf{out}}}{\dif{\textbf{out}}} = \bar{\textbf{out}} = {\color{red}1.0}
 \end{equation*}
-The {\color{red} initialization} are called {\color{red} seeds} when dealing with many variables.
+Note that the initialization might not be just a scalar $1$, but could be any seed matrix when dealing with many variables!
 \end{frame}
 
 \begin{frame}{Costs of Tangent and Adjoint AD}
@@ -936,7 +939,7 @@ $f \>\>:\>\>\>\> \hbox{\bf in} \in \Rbb^{p} \>\>\rightarrow\>\> \hbox{\bf out} \
   \end{block}
 \end{frame}
 
-\begin{frame}{JVPs complements VJPs}
+\begin{frame}{JVPs complement VJPs}
   \begin{block}{A quadratic model and conjugate gradient}
     For a quadratic objective
     $$
@@ -1144,7 +1147,14 @@ Best when:
 
 \end{frame}
 
-\begin{frame}{Exemple 05: reverse mode}
+\begin{frame}{Example 05: reverse mode}
+  This code is the same as the previous one. 
+  \begin{itemize}
+    \item Run \texttt{Tapenade} in \texttt{-reverse} mode. 
+    \item Look at the addition of the \texttt{adStack} library (available in the \texttt{ADFirstAidKit})
+    \item A variable \texttt{adCount} seems to be misplaced. It is. But is has since been corrected in \texttt{Tapenade} and will be released soon.
+    \item Some driver code has been added for you to run a comparison between forward and backward modes: look in particular at the end of the files and compare.
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Take-home message 5}
@@ -1158,7 +1168,16 @@ Best when:
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Exemple 06: tangent vs reverse; loop vs vector}
+\begin{frame}{Example 06: tangent vs reverse; loop vs vector}
+  \begin{itemize}
+    \item As should be usual with any code: familiarize yourself with it, and make sure it runs
+    \item Run the \texttt{Tapenade} context and debug modes to make sure differentiation has a chance to succeed
+    \item We are interested in the four dependent variables \texttt{average}, \texttt{mabs}, \texttt{std}, and \texttt{a\_to\_s} and the (vector of) independent variable \texttt{values}. 
+    \item The root of differentiation is the function called \texttt{compute\_qoi}.
+    \item Adapt the sample driver code in \texttt{RESULTS} into four version: forward (+ \texttt{for} loop), forward vector, reverse (+ \texttt{for} loop), and vector reverse.
+    \item Compare the execution times.
+    \item Don't forget to link the \texttt{ADFirstAidKit} to the compilation!
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Take-home message 6}
