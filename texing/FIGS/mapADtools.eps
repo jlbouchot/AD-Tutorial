@@ -1,0 +1,111 @@
+%!PS-Adobe-2.0 EPSF-1.2
+%%Creator: llh
+%%DocumentFonts: Times-Bold Times-Italic
+%%Pages: 1
+%%BoundingBox: 0 0 550 400
+%%EndComments
+
+/M{moveto}bind def
+/m{rmoveto}bind def
+/L{lineto}bind def
+/l{rlineto}bind def
+/black{0. 0. 0. setrgbcolor}bind def
+/darkred{0.5 0. 0. setrgbcolor}bind def
+/analysiscolor{0.8 1. 0.8 setrgbcolor}bind def
+/trunkcolor{1. 0.8 0.5 setrgbcolor}bind def
+/ft2 /Lucida-Bold findfont 16 scalefont def
+/mainfont{ft2 setfont}bind def
+/ft3 /Lucida-Italic findfont 18 scalefont def
+/italfont{ft3 setfont}bind def
+
+/splbit{/dyy2 exch def /dxx2 exch def /yy2 exch def /xx2 exch def
+        /dyy1 exch def /dxx1 exch def /yy1 exch def /xx1 exch def
+xx1 dxx1 add yy1 dyy1 add xx2 dxx2 sub yy2 dyy2 sub xx2 yy2 curveto
+}bind def
+
+black 1 setlinewidth 
+
+trunkcolor
+
+0 350 M
+0 350 200 0 310 390 200 0 splbit
+0 10 l 20 -55 l -20 -55 l 0 10 l
+310 300 -100 0 200 275 -50 -10 splbit
+200 275 50 0 375 290 50 0 splbit
+0 10 l 20 -42 l -20 -42 l 0 10 l
+375 225 -200 0 25 200 -200 -10 splbit
+25 200 200 0 275 180 50 0 splbit
+0 5 l 20 -15 l -20 -15 l 0 5 l
+275 160 -10 0 175 175 -20 5 splbit
+175 175 20 -10 325 125 30 0 splbit
+325 125 40 0 425 140 40 0 splbit
+0 5 l 20 -15 l -20 -15 l 0 5 l
+425 125 -30 0 300 110 -80 10 splbit
+300 110 40 -5 425 75 20 0 splbit
+0 8 l 20 -30 l -20 -30 l 0 8 l
+425 30 -50 0 25 125 -100 0 splbit
+25 125 100 -10 225 25 100 -10 splbit
+0 5 l 20 -15 l -20 -15 l 0 5 l
+225 5 -100 10 0 100 -110 0 splbit
+closepath fill
+
+darkred italfont
+
+50 289 M (Overloading-) show
+70 271 M (based) show
+
+215 349 M (single-) show
+200 331 M (language) show
+
+black mainfont
+340 375 M (CppAD) show
+340 355 M (FADBAD) show
+340 335 M (MAD) show
+340 315 M (AD for Matlab) show
+darkred italfont
+
+235 259 M (multi-) show
+220 241 M (language) show
+
+black mainfont
+410 275 M (Adol-C) show
+410 255 M (dco) show
+410 235 M (complex-step) show
+darkred italfont
+
+75 169 M (Source) show
+50 151 M (transformation) show
+
+215 179 M (single-) show
+200 161 M (language) show
+
+black mainfont
+300 180 M (ADIFOR) show
+300 160 M (ADiMat) show
+darkred italfont
+
+215 109 M (multi-) show
+200  91 M (language) show
+
+305 129 M (data-flow reversal) show
+310 111 M (by recomputation) show
+
+black mainfont
+460 125 M (TAF\/TAC++) show
+darkred italfont
+
+300  65 M (data-flow reversal) show
+330  47 M (by storage) show
+
+black mainfont
+460 55 M (OpenAD) show
+460 35 M (Tapenade) show
+darkred italfont
+
+55 79 M (Compiler-) show
+50 61 M (embedded) show
+
+black mainfont
+246 25  M (NAG compiler) show
+266 05  M (LLVM) show
+darkred italfont

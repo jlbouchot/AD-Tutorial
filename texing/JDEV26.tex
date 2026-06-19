@@ -107,6 +107,82 @@
 
 \end{frame}
 
+\begin{frame}{How the session will unfold}
+  We will have a mix of theory and practice. Here is a tentative schedule
+  \begin{itemize}
+    \item Introduction and success stories
+    \item Theory: Basics of AD
+    \item Some hands-on work with \texttt{Tapenade} in forward mode
+    \item Debugging and validation via \texttt{context} mode
+    \item Analysis of compute times and \texttt{vector} mode
+    \item Introduction of \texttt{reverse} mode
+    \item Discussion / questions
+  \end{itemize}
+  Most of the codes are available in \texttt{C} and \texttt{Fortran} and, to some extent \texttt{Jax/Python}.
+\end{frame}
+
+\begin{frame}{How to evaluate differentiated code?}
+
+Roughly two main paradigms: 
+\begin{itemize}
+\item {\color{darkerred} source transformation}: Parse, analyse, and generate a source code implementing the derivatives
+\item or {\color{darkerred} overloading}: Update the source code to adapt {\color{darkerred} active} {\tt float, real} to {\tt aDouble},
+and link with arithmetic library on {\tt aDouble}'s.
+\end{itemize}
+
+
+Pros and cons: 
+\begin{tabular}{|l||l|l|}
+\hline
+ & O-O & ST-AD \\ 
+\hline
+\hline
+Dev & easy(-ier) & Demanding \\ 
+\hline
+Code optim. & \begin{minipage}[t]{.43\linewidth} None \end{minipage} & \begin{minipage}[t]{.30\linewidth}
+Various analysis, \\ simplifications
+\end{minipage} \\ 
+\hline 
+Efficiency & Complete unroling & Loops \\ 
+\hline
+Adaptability & \begin{minipage}[t]{.43\linewidth}Frictionless for exotic constructs and controls \end{minipage} & \begin{minipage}[t]{.30\linewidth}Demanding \end{minipage}\\ 
+\hline
+\end{tabular}
+\end{frame}
+
+\frame{
+\frametitle{Abstractions}
+
+What code should be differentiated? Two main ideas: 
+\begin{itemize}
+\item High level code ({\tt ForTran}, {\tt C++}, {\tt Julia}...) and generate high level code
+\item Differentiate some \emph{precompiled code} ({\tt LLVM}) and geneate mid level-code
+\end{itemize}
+
+Pros and cons: 
+\begin{tabular}{|l||l|l|}
+\hline
+ & High & Mid \\ 
+\hline
+\hline
+Versatility & Low & High \\ 
+\hline
+Code optim & Static+ compil. & Twice \\ 
+\hline
+Readability & High & Low \\
+\hline 
+Hand tuned & Easy & ? \\
+\hline
+\end{tabular}
+}
+
+
+\begin{frame}
+\large\frametitle{A taxonomy of AD tools}
+\centerline{\includegraphics[width=\linewidth,height=8cm]{FIGS/mapADtools}}
+\end{frame}
+
+
 
 %================================================
 \begin{frame}{What are some successful uses of AD?}
@@ -661,8 +737,15 @@ DBAD_PHASE=2 ./tgt
 \begin{frame}{Running example 04}
   Look at example 04 and 
   \begin{itemize}
+    \item Run the sample code: \texttt{make; ./ctest} $\Rightarrow$ always make sure your code runs! or \texttt{gcc -o ctest.exe toBeDifferentiated.c -lm; ./ctest.exe}
     \item Run tapenade in forward mode, differentiating the routine \texttt{compute\_matrices} in forward mode.
-
+    \item Look specifically at the differentiated structures.
+    \item Validate the derivatives using the \texttt{-context} mode and the two \texttt{DBAD\_PHASE} calls.
+    \item Re-run \texttt{Tapenade} but in the case where you are solely interested in the \texttt{aff}, \texttt{sigma}, and \texttt{max\_val} variables. 
+    \item Adapt the driver provided in \texttt{RESULTS} as a \texttt{driver\_gradient\_d.c} to compute the derivative via a \texttt{for} loop, seeding every aindependent variable one after the other.
+    \item Compile things (\texttt{gcc -o grad\_test\_d.exe driver\_gradient\_d.c -lm}) and run (\texttt{./grad\_test\_d.exe}).
+    \item Repeat the three previous operations but with the \texttt{-vector} mode for \texttt{Tapenade} (and create a \texttt{driver\_gradient\_dv.c}).
+    \item Compile, run, compare.
   \end{itemize}
 \end{frame}
 
