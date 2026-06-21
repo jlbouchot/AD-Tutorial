@@ -939,36 +939,71 @@ $f \>\>:\>\>\>\> \hbox{\bf in} \in \Rbb^{p} \>\>\rightarrow\>\> \hbox{\bf out} \
   \end{block}
 \end{frame}
 
-\begin{frame}{JVPs complement VJPs}
-  \begin{block}{A quadratic model and conjugate gradient}
-    For a quadratic objective
-    $$
-    \phi(\xbf) = \tfrac12 \xbf^T A \xbf - b^T\xbf,
-    $$
-    the conjugate gradient method generates iterates
-    $$
-    \xbf_{k+1} = \xbf_k + \alpha_k p_k
-    $$
-    where the search direction satisfies
-    $$
-    p_{k+1} = r_{k+1} + \beta_k p_k,
-    \qquad
-    r_k = b - A\xbf_k.
-    $$
+
+
+% \begin{frame}{JVPs complement VJPs}
+%   \begin{block}{A quadratic model and conjugate gradient}
+%     For a quadratic objective
+%     $$
+%     \phi(\xbf) = \tfrac12 \xbf^T A \xbf - b^T\xbf,
+%     $$
+%     the conjugate gradient method generates iterates
+%     $$
+%     \xbf_{k+1} = \xbf_k + \alpha_k p_k
+%     $$
+%     where the search direction satisfies
+%     $$
+%     p_{k+1} = r_{k+1} + \beta_k p_k,
+%     \qquad
+%     r_k = b - A\xbf_k.
+%     $$
+%   \end{block}
+
+%   \begin{itemize}
+%     \item In a nonlinear setting, one often replaces $A$ by the Hessian $\nabla^2 \phi(\xbf_k)$.
+%     \item The Hessian-vector product needed by CG is then of the form
+%       $$
+%       \nabla^2 \phi(\xbf_k) v.
+%       $$
+%     \item For a scalar residual model $r(\xbf)$, this can be obtained from JVPs and VJPs via
+%       $$
+%       \nabla^2 \phi(\xbf) v = J_r(\xbf)^T J_r(\xbf) v,
+%       $$
+%       so the method needs repeated Jacobian action on vectors.
+%     \item This is exactly why JVPs and VJPs are useful inside Newton--Krylov and CG-type solvers.
+%   \end{itemize}
+% \end{frame}
+
+\begin{frame}{JVPs and VJPs for nonlinear least squares}
+  \begin{block}{Problem}
+    We seek a minimizer of $\phi(\xbf) = \tfrac12 \|F(\xbf)\|_2^2,\qquad F:\mathbb{R}^n \to \mathbb{R}^m.$
+    Here $F$ is the vector of residuals and $J_F(\xbf)$ is its Jacobian.
+  \end{block}
+
+  \begin{block}{Gauss--Newton step}
+    The gradient is given by the VJP $\nabla \phi(\xbf) = J_F(\xbf)^T F(\xbf)$,
+    and the Gauss--Newton step solves
+    $
+    J_F(\xbf)^T J_F(\xbf) s = -J_F(\xbf)^T F(\xbf).
+    $
   \end{block}
 
   \begin{itemize}
-    \item In a nonlinear setting, one often replaces $A$ by the Hessian $\nabla^2 \phi(\xbf_k)$.
-    \item The Hessian-vector product needed by CG is then of the form
+  %   \item For any direction $v$, the Jacobian action is a JVP:
+  %     $$
+  %     J_F(\xbf) v = \mathrm{JVP}_F(\xbf, v).
+  %     $$
+  %   \item For any sensitivity vector $w$, the transposed Jacobian action is a VJP:
+  %     $$
+  %     J_F(\xbf)^T w = \mathrm{VJP}_F(\xbf, w).
+  %     $$
+    \item Hence
       $$
-      \nabla^2 \phi(\xbf_k) v.
+      J_F(\xbf)^T J_F(\xbf) v
+      = \mathrm{VJP}_F\big(\xbf, \mathrm{JVP}_F(\xbf, v)\big),
       $$
-    \item For a scalar residual model $r(\xbf)$, this can be obtained from JVPs and VJPs via
-      $$
-      \nabla^2 \phi(\xbf) v = J_r(\xbf)^T J_r(\xbf) v,
-      $$
-      so the method needs repeated Jacobian action on vectors.
-    \item This is exactly why JVPs and VJPs are useful inside Newton--Krylov and CG-type solvers.
+      and the right-hand side is simply $\mathrm{VJP}_F(\xbf, F(\xbf))$.
+    \item This is why JVPs and VJPs are the natural building blocks for Krylov-based least-squares solvers.
   \end{itemize}
 \end{frame}
 
