@@ -190,7 +190,11 @@ Hand tuned & Easy & ? \\
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \begin{block}{MITgcm}
-        Compute XXX
+        \begin{itemize}
+          \item Simulates planetary atmosphere and ocean circulations. 
+          \item Derivatives used for large-scale data assimilation.
+           \item We have added Tapenade to MITgcm’s build process.
+         \end{itemize}
       \end{block}
     \end{column}
     \begin{column}{0.5\textwidth}
@@ -209,12 +213,17 @@ Hand tuned & Easy & ? \\
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \begin{block}{HBTHO}
-        Compute XXX
+        \begin{itemize}
+          \item Characterizes properties of atomic nuclei.
+          \item Used to calibrate energy functionals and perform sensitivity analysis by using derivative-free methods.
+          \item  Tapenade differentiated HFBTHO for enabling derivative based optimization.
+          \item HFBTHO is written in Fortran90 and employs OpenMP, BLAS \& LAPACK.
+        \end{itemize}
       \end{block}
     \end{column}
     \begin{column}{0.5\textwidth}
       \begin{center}
-        \includegraphics[width=0.8\textwidth]{FIGS/a-picture-for-hfbtho.jpg}
+        \includegraphics[width=0.8\textwidth]{FIGS/unedfdata.eps}
       \end{center}
     \end{column}
   \end{columns}
