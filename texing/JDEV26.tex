@@ -115,6 +115,7 @@
     \item Some hands-on work with \texttt{Tapenade} in forward mode
     \item Debugging and validation via \texttt{context} mode
     \item Analysis of compute times and \texttt{vector} mode
+    \item COFFEE BREAK!! (roughly 3:45-4:15pm)
     \item Introduction of \texttt{reverse} mode
     \item Discussion / questions
   \end{itemize}
@@ -548,14 +549,24 @@ Systematic application of the chain rule on every instruction in the code, inter
 \end{frame}
 
 \begin{frame}{Let's get started with Tapenade}
-  Various ways to test Tapenade:
-  \begin{itemize}
-    \item Online via Tapenade's servlet
-    \item Local install
-    \item In a docker environment
-    \item Go to XXXX TODO: Add Tiny URL once public
-    \item Follow the README for install / usage instructions
-  \end{itemize}
+  \begin{columns}
+    \begin{column}{0.6\linewidth}
+      Various ways to test Tapenade:
+      \begin{itemize}
+        \item Online via Tapenade's servlet: http://www-tapenade.inria.fr:8080/tapenade/index.jsp
+        \item Local install
+        \item In a docker environment
+        \item Go to https://github.com/jlbouchot/AD-Tutorial for this tutorial 
+        \item Follow the README for install / usage instructions
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.39\linewidth}
+      \centerline{\includegraphics[width=0.7\linewidth]{FIGS/ADTutorial}} 
+      \centerline{{\tiny Tutorial repo}} 
+      \centerline{\includegraphics[width=0.7\linewidth]{FIGS/tapenadelink}} 
+      \centerline{{\tiny Tapenade repo}} 
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \begin{frame}[fragile]{First example}
@@ -1234,101 +1245,112 @@ Best when:
   \end{itemize}
 \end{frame}
 
-%================================================
-\section{Pitfalls}
-
-%================================================
-\begin{frame}{Common Pitfalls}
-
-\begin{itemize}
-\item Non-differentiable functions (abs, max)
-\item Hidden state
-\item Memory in reverse mode
-\item Aliasing in Fortran
-\end{itemize}
-
+\begin{frame}{What next?}
+  Thank you for your attention! 
+  \begin{itemize}
+    \item Need to now more? $\Rightarrow$ FAQ: https://tapenade.gitlabpages.inria.fr/userdoc/build/html/tapenade/faq.html
+    \item A question regarding some collaboration? tapenade-admin@inria.fr
+    \item A question as a user asking for help? tapenade-users@inria.fr 
+    \item Need to know more about tapenade's options $\Rightarrow$ https://tapenade.gitlabpages.inria.fr/userdoc/build/html/index.html
+    \item This is an open source project, don't hesitate to contribute!
+  \end{itemize}
 \end{frame}
 
-%================================================
-\section{Summary}
+% %================================================
+% \section{Pitfalls}
 
-%================================================
-\begin{frame}{Takeaways}
+% %================================================
+% \begin{frame}{Common Pitfalls}
 
-\begin{itemize}
-\item AD applies the chain rule to programs
-\item Forward mode: push derivatives
-\item Reverse mode: pull sensitivities
-\item Reverse requires accumulation (+=)
-\item Tapenade automates the process
-\end{itemize}
+% \begin{itemize}
+% \item Non-differentiable functions (abs, max)
+% \item Hidden state
+% \item Memory in reverse mode
+% \item Aliasing in Fortran
+% \end{itemize}
 
-\end{frame}
+% \end{frame}
 
-%================================================
-\begin{frame}
-\centering
-\Huge Now let's get started!
-\end{frame}
+% %================================================
+% \section{Summary}
 
-%================================================
-\section{Tapenade Practice}
+% %================================================
+% \begin{frame}{Takeaways}
 
-%================================================
-\begin{frame}[fragile]{Example Fortran Code}
+% \begin{itemize}
+% \item AD applies the chain rule to programs
+% \item Forward mode: push derivatives
+% \item Reverse mode: pull sensitivities
+% \item Reverse requires accumulation (+=)
+% \item Tapenade automates the process
+% \end{itemize}
 
-\begin{lstlisting}
-double precision function energy(x)
-double precision x
-energy = x*x + sin(x)
-end
-\end{lstlisting}
+% \end{frame}
 
-\end{frame}
+% %================================================
+% \begin{frame}
+% \centering
+% \Huge Now let's get started!
+% \end{frame}
 
-%================================================
-\begin{frame}[fragile]{Running Tapenade}
+% %================================================
+% \section{Tapenade Practice}
 
-Forward mode:
+% %================================================
+% \begin{frame}[fragile]{Example Fortran Code}
 
-\begin{lstlisting}
-tapenade -forward -head energy energy.f
-\end{lstlisting}
+% \begin{lstlisting}
+% double precision function energy(x)
+% double precision x
+% energy = x*x + sin(x)
+% end
+% \end{lstlisting}
 
-Reverse mode:
+% \end{frame}
 
-\begin{lstlisting}
-tapenade -reverse -head energy energy.f
-\end{lstlisting}
+% %================================================
+% \begin{frame}[fragile]{Running Tapenade}
 
-\end{frame}
+% Forward mode:
 
-%================================================
-\begin{frame}{What Tapenade Generates}
+% \begin{lstlisting}
+% tapenade -forward -head energy energy.f
+% \end{lstlisting}
 
-You will see:
+% Reverse mode:
 
-\begin{itemize}
-\item Tangent variables (forward)
-\item Adjoint variables (reverse)
-\item Two-pass structure in reverse mode
-\end{itemize}
+% \begin{lstlisting}
+% tapenade -reverse -head energy energy.f
+% \end{lstlisting}
 
-\end{frame}
+% \end{frame}
 
-%================================================
-\begin{frame}[fragile]{Loop Example}
+% %================================================
+% \begin{frame}{What Tapenade Generates}
 
-\begin{lstlisting}
-do i = 1, n
-   y = y + a(i)*x(i)
-end do
-\end{lstlisting}
+% You will see:
 
-\begin{block}{Important}
-AD differentiates through loops automatically.
-\end{block}
+% \begin{itemize}
+% \item Tangent variables (forward)
+% \item Adjoint variables (reverse)
+% \item Two-pass structure in reverse mode
+% \end{itemize}
 
-\end{frame}
+% \end{frame}
+
+% %================================================
+% \begin{frame}[fragile]{Loop Example}
+
+% \begin{lstlisting}
+% do i = 1, n
+%    y = y + a(i)*x(i)
+% end do
+% \end{lstlisting}
+
+% \begin{block}{Important}
+% AD differentiates through loops automatically.
+% \end{block}
+
+% \end{frame}
 
 \end{document}
